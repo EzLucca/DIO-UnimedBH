@@ -1,0 +1,300 @@
+#+title: Analise Exploratoria Vendas
+
+ Refazendo a análise exploratória do Desafio de Projeto 1 da DIO-Unimed-BH. O original foi feito no google Colab conforme videos disponibilizados. Tentei refazer utilizando o org-mode pelo Doom-Emacs.
+
+* Códigos
+
+#+begin_src jupyter-python :session 1a :async yes
+import pandas as pd
+import matplotlib.pyplot as plt
+plt.style.use("seaborn")
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session 1a :async yes
+df = pd.read_excel("AdventureWorks.xlsx")
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session 1a :async yes
+df.head()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  Data Venda Data Envio  ID Loja  ID Produto  ID Cliente       No. Venda  \
+0 2008-05-09 2008-05-29      199         384       18839  200805093CS607
+1 2008-05-12 2008-05-17      306         384       19051  200805123CS567
+2 2008-05-14 2008-05-20      306         384       19052  200805143CS576
+3 2008-05-21 2008-05-27      306         384       19052  200805213CS576
+4 2008-06-20 2008-06-27      306         384       19053  200806203CS586
+
+   Custo Unitário  Preço Unitário  Quantidade  Valor Desconto  Valor Venda  \
+0          348.58           758.0           6             0.0       4548.0
+1          348.58           758.0           6             0.0       4548.0
+2          348.58           758.0           6             0.0       4548.0
+3          348.58           758.0           6             0.0       4548.0
+4          348.58           758.0           6             0.0       4548.0
+
+                                 Produto       Fabricante            Marca  \
+0  Adventure Works Laptop15.4W M1548 Red  Adventure Works  Adventure Works
+1  Adventure Works Laptop15.4W M1548 Red  Adventure Works  Adventure Works
+2  Adventure Works Laptop15.4W M1548 Red  Adventure Works  Adventure Works
+3  Adventure Works Laptop15.4W M1548 Red  Adventure Works  Adventure Works
+4  Adventure Works Laptop15.4W M1548 Red  Adventure Works  Adventure Works
+
+    Classe  Cor
+0  Regular  Red
+1  Regular  Red
+2  Regular  Red
+3  Regular  Red
+4  Regular  Red
+#+end_example
+
+#+begin_src jupyter-python :session 1a :async yes
+print(df.shape)
+print(df.dtypes)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+(904, 16)
+Data Venda        datetime64[ns]
+Data Envio        datetime64[ns]
+ID Loja                    int64
+ID Produto                 int64
+ID Cliente                 int64
+No. Venda                 object
+Custo Unitário           float64
+Preço Unitário           float64
+Quantidade                 int64
+Valor Desconto           float64
+Valor Venda              float64
+Produto                   object
+Fabricante                object
+Marca                     object
+Classe                    object
+Cor                       object
+dtype: object
+#+end_example
+
+#+begin_src jupyter-python :session 1a :async yes
+df['Valor Venda'].sum()
+#+end_src
+
+#+RESULTS:
+: 5984606.1426
+
+#+begin_src jupyter-python :session 1a :async yes
+df['Custo'] = df['Custo Unitário'].mul(df['Quantidade'])
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session 1a :async yes
+df.head(1)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  Data Venda Data Envio  ID Loja  ID Produto  ID Cliente       No. Venda  \
+0 2008-05-09 2008-05-29      199         384       18839  200805093CS607
+
+   Custo Unitário  Preço Unitário  Quantidade  Valor Desconto  Valor Venda  \
+0          348.58           758.0           6             0.0       4548.0
+
+                                 Produto       Fabricante            Marca  \
+0  Adventure Works Laptop15.4W M1548 Red  Adventure Works  Adventure Works
+
+    Classe  Cor    Custo
+0  Regular  Red  2091.48
+#+end_example
+
+#+begin_src jupyter-python :session 1a :async yes
+df['Lucro'] = df['Valor Venda']- df['Custo']
+round(df['Lucro'].sum(),2)
+#+end_src
+
+#+RESULTS:
+: 3497823.09
+
+#+begin_src jupyter-python :session 1a :async yes
+df['Tempo_envio'] = (df['Data Envio'] - df['Data Venda']).dt.days
+df.head(1)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  Data Venda Data Envio  ID Loja  ID Produto  ID Cliente       No. Venda  \
+0 2008-05-09 2008-05-29      199         384       18839  200805093CS607
+
+   Custo Unitário  Preço Unitário  Quantidade  Valor Desconto  Valor Venda  \
+0          348.58           758.0           6             0.0       4548.0
+
+                                 Produto       Fabricante            Marca  \
+0  Adventure Works Laptop15.4W M1548 Red  Adventure Works  Adventure Works
+
+    Classe  Cor    Custo    Lucro  Tempo_envio
+0  Regular  Red  2091.48  2456.52           20
+#+end_example
+
+#+begin_src jupyter-python :session 1a :async yes
+df.groupby('Marca')['Tempo_envio'].mean()
+#+end_src
+
+#+RESULTS:
+: Marca
+: Adventure Works    8.663866
+: Contoso            8.470930
+: Fabrikam           8.510121
+: Name: Tempo_envio, dtype: float64
+
+#+begin_src jupyter-python :session 1a :async yes
+df.isnull().sum()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Data Venda        0
+Data Envio        0
+ID Loja           0
+ID Produto        0
+ID Cliente        0
+No. Venda         0
+Custo Unitário    0
+Preço Unitário    0
+Quantidade        0
+Valor Desconto    0
+Valor Venda       0
+Produto           0
+Fabricante        0
+Marca             0
+Classe            0
+Cor               0
+Custo             0
+Lucro             0
+Tempo_envio       0
+dtype: int64
+#+end_example
+
+#+begin_src jupyter-python :session 1a :async yes
+lucro_ano = df.groupby([df['Data Venda'].dt.year, 'Marca'])['Lucro'].sum().reset_index()
+lucro_ano
+#+end_src
+
+#+RESULTS:
+:    Data Venda            Marca                Lucro
+: 0        2008  Adventure Works           306,641.16
+: 1        2008          Contoso            56,416.00
+: 2        2008         Fabrikam         1,557,020.55
+: 3        2009  Adventure Works           405,395.08
+: 4        2009          Contoso           138,258.95
+: 5        2009         Fabrikam         1,034,091.35
+
+#+begin_src jupyter-python :session 1a :async yes
+pd.options.display.float_format = '{:20,.2f}'.format
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session 1a :async yes
+df.groupby('Produto')['Quantidade'].sum().sort_values(ascending = True).plot.barh(title = 'Total de produto Vendidos')
+plt.xlabel('Total')
+plt.ylabel('Produto');
+#+end_src
+
+#+RESULTS:
+[[file:./.ob-jupyter/5056907e45bc668f4652c16d83db71611355496d.png]]
+
+#+begin_src jupyter-python :session 1a :async yes
+df_2009 = df[df['Data Venda'].dt.year == 2009]
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session 1a :async yes
+df_2009.groupby(df_2009['Data Venda'].dt.month)['Lucro'].sum().plot.bar(title="Lucro por mês")
+plt.xlabel('Mês')
+plt.ylabel('Lucro');
+#+end_src
+
+#+RESULTS:
+[[file:./.ob-jupyter/e85109b0befa82da3bd4f4d942fe1597ddccaaea.png]]
+
+#+begin_src jupyter-python :session 1a :async yes
+plt.boxplot(df['Tempo_envio']);
+#+end_src
+
+#+RESULTS:
+[[file:./.ob-jupyter/eab9dda0d44c573d981e5b3943ef2c5dbd9fcf72.png]]
+
+#+begin_src jupyter-python :session 1a :async yes
+plt.boxplot(df['Preço Unitário']);
+#+end_src
+
+#+RESULTS:
+[[file:./.ob-jupyter/cbfabebbd93ebf3e5215d2089610153303f28892.png]]
+
+#+begin_src jupyter-python :session 1a :async yes
+df['Tempo_envio'].describe()
+#+end_src
+
+#+RESULTS:
+: count                 904.00
+: mean                    8.54
+: std                     3.06
+: min                     4.00
+: 25%                     6.00
+: 50%                     9.00
+: 75%                    11.00
+: max                    20.00
+: Name: Tempo_envio, dtype: float64
+
+#+begin_src jupyter-python :session 1a :async yes
+df.describe()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+                   ID Loja           ID Produto           ID Cliente  \
+count               904.00               904.00               904.00
+mean                270.02             1,225.24            19,029.09
+std                  50.96               706.70                96.43
+min                 199.00               366.00            18,815.00
+25%                 199.00               384.00            18,964.75
+50%                 306.00             1,202.00            19,060.00
+75%                 307.00             1,226.00            19,107.00
+max                 307.00             2,497.00            19,145.00
+
+            Custo Unitário       Preço Unitário           Quantidade  \
+count               904.00               904.00               904.00
+mean                272.01               742.53                62.95
+std                 129.77               368.59               148.95
+min                   5.09                 9.99                 2.00
+25%                 324.69               758.00                 6.00
+50%                 330.66               980.00                 9.00
+75%                 348.58               998.00                17.00
+max                 348.58               999.00             1,560.00
+
+            Valor Desconto          Valor Venda                Custo  \
+count               904.00               904.00               904.00
+mean                689.12             6,620.14             2,750.87
+std                 822.36             4,319.41             1,646.07
+min                   0.00               159.84                81.44
+25%                   0.00             3,920.00             1,742.90
+50%                 461.17             5,798.70             2,091.48
+75%               1,005.08             7,986.00             3,571.59
+max               6,272.00            29,400.00            11,154.56
+
+                     Lucro          Tempo_envio
+count               904.00               904.00
+mean              3,869.27                 8.54
+std               2,823.81                 3.06
+min                  78.40                 4.00
+25%               2,001.72                 6.00
+50%               3,405.24                 9.00
+75%               4,670.68                11.00
+max              19,659.30                20.00
+#+end_example
